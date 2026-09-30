@@ -1,6 +1,7 @@
-backend/.env
 .env
 *.env
+*.save
+*.save.*
 
 __pycache__/
 *.py[cod]
@@ -8,8 +9,6 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
-
-docker-compose.yml
 
 *.log
 .DS-Store
