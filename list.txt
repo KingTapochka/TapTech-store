@@ -1,0 +1,10 @@
+docs
+backend
+frontend
+infrastructure
+docker
+k8s
+helm
+ansible
+terraform
+monitoring
