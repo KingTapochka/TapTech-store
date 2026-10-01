@@ -41,7 +41,23 @@ backend падает при старте c ошибкой "DENIED Redis is runni
 Исправление:
 Убрал публикацию порта у backend в docker-compose. Доступ к backend будет только через nginx внутри docker-compose сети. Правила UFW не защищают порты опубликованные docker
 
+## 4 Nginx не находит backend после ошибки с портом 80
 
+Симптом:
+Nginx постоянно перезапускается, статус "Restarting". В логах:
+"host not found in upstream backend in /etc/nginx/conf.d/default.conf:6"
+Backend при этом работает.
+
+Диагностика:
+1. При первом запуске nginx упал с ошибкой "failed to bind host port 0.0.0.0:80/tcp: address already in use".
+2. Через sudo ss -lntp | grep ':80 ' нашёл, что порт 80 на хосте занят nginx, остановил и отключил автозапуск.
+3. Повторный docker compose up -d не пересоздал nginx, а запустил тот же контейнер. Видно по id.
+4. По логам entrypoint проходит ("Configuration complete"), падает сам nginx: При чтении proxy_pass не может найти адрес backend.
+
+Исправление:
+1. docker compose up -d --force-recreate nginx, контейнер создан заново с новым ID.
+2. Проверил через docker network inspect computer-store_default, что все 4 контейнера в одной сети.
+3. curl http://localhost/api/health возвращает ответ от backend.
 
 
 
