@@ -11,12 +11,12 @@ def health_check():
         with conn.cursor() as cur:
             cur.execute("SELECT 1")
     except Exception:
-        raise HTTPException(status_code=500, detail="PostgreSQL unavailable")
+        raise HTTPException(status_code=503, detail="PostgreSQL unavailable")
     finally:
         release_db_connection(conn)
 
     # Проверка Redis
     if not ping_redis():
-        raise HTTPException(status_code=500, detail="Redis unavailable")
+        raise HTTPException(status_code=503, detail="Redis unavailable")
 
     return {"status": "ok"}
