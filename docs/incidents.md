@@ -39,7 +39,8 @@ backend падает при старте c ошибкой "DENIED Redis is runni
 4. В iptables Docker добавил свои правила перенаправления на контейнер
 
 Исправление:
-Убрал публикацию порта у backend в docker-compose. Доступ к backend будет только через nginx внутри docker-compose сети. Правила UFW не защищают порты опубликованные docker
+Убрал публикацию порта у backend в docker-compose. Доступ к backend будет только через nginx 
+внутри docker-compose сети. Правила UFW не защищают порты опубликованные docker
 
 ## 4 Nginx не находит backend после ошибки с портом 80
 
@@ -52,12 +53,30 @@ Backend при этом работает.
 1. При первом запуске nginx упал с ошибкой "failed to bind host port 0.0.0.0:80/tcp: address already in use".
 2. Через sudo ss -lntp | grep ':80 ' нашёл, что порт 80 на хосте занят nginx, остановил и отключил автозапуск.
 3. Повторный docker compose up -d не пересоздал nginx, а запустил тот же контейнер. Видно по id.
-4. По логам entrypoint проходит ("Configuration complete"), падает сам nginx: При чтении proxy_pass не может найти адрес backend.
+4. По логам entrypoint проходит "Configuration complete", падает сам nginx: При чтении proxy_pass не может найти 
+   адрес backend.
 
 Исправление:
 1. docker compose up -d --force-recreate nginx, контейнер создан заново с новым ID.
 2. Проверил через docker network inspect computer-store_default, что все 4 контейнера в одной сети.
 3. curl http://localhost/api/health возвращает ответ от backend.
 
+## 5 Редирект с HTTPS на HTTP и 502 после правки nginx
 
+Симптом:
+1. curl -i https://tatptech24.ru/api/products возвращает 307 с location: http, а не https.
+2. После добавления resolver в конфиг nginx все запросы стали получать 502.
+
+Диагностика:
+1. docker inspect: у uvicorn есть --proxy-headers, команда применилась.
+2. Отправил запрос в backend напрямую из контейнера nginx через wget с заголовком X-Forwarded-Proto: 
+   https. Backend ответил редиректом на https,значит проблема в nginx.
+3. Конфиг внутри контейнера отличался от файла на диске:
+   файл смонтирован по отдельности, после правки контейнер видел старую версию.
+4. 502: в proxy_pass переменная $upstream, а строки resolver не было.
+   Без resolver nginx не может найти адрес backend при запросе.
+
+Исправление:
+1. Добавил resolver 127.0.0.11 valid=10s в блок server.
+2. Перенёс конфиг в nginx/conf.d и монтирую папку, а не файл. Теперь достаточно nginx -s reload.
 
