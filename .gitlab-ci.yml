@@ -1,0 +1,27 @@
+stages:
+  - test
+
+test:
+  stage: test
+  image: python:3.12-slim
+  services:
+    - name: postgres:16
+      alias: postgres
+    - name: redis:7
+      alias: redis
+  variables:
+    POSTGRES_DB: shop_test
+    POSTGRES_USER: shop_user
+    POSTGRES_PASSWORD: test_password
+    DB_HOST: postgres
+    DB_PORT: "5432"
+    DB_NAME: shop_test
+    DB_USER: shop_user
+    DB_PASSWORD: test_password
+    REDIS_URL: redis://redis:6379/0
+  before_script:
+    - cd backend
+    - pip install --no-cache-dir -r requirements.txt
+  script:
+  - alembic upgrade head
+  - pytest -v
