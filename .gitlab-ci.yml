@@ -35,7 +35,7 @@ build:
   variables:
     DOCKER_TLS_CERTDIR: "/certs"
   before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" -- password-stdin "$CI_REGISTRY"
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
   script:
     - dcoker build -t "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA" backend
     - docker push "$CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA"
