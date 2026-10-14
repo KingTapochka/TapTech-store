@@ -24,8 +24,8 @@ test:
     - cd backend
     - pip install --no-cache-dir -r requirements.txt
   script:
-  - alembic upgrade head
-  - pytest -v
+    - alembic upgrade head
+    - pytest -v
 
 build:
   stage: build
