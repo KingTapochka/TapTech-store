@@ -29,7 +29,7 @@ services:
       retries: 5
 
   backend:
-    build: ./backend
+    image: registry.gitlab.com/gone.done1997/tatptech-store/backend:${BACKEND_TAG}
     restart: unless-stopped
     environment:
       DB_HOST: postgres
