@@ -75,7 +75,7 @@ deploy:
   stage: deploy
   image: alpine:3.20
   before_script:
-    - apk add --no-cache apenssh-client
+    - apk add --no-cache openssh-client
     - chmod 600 "$SSH_PRIVATE_KEY"
     - mkdir -p ~/.ssh
     - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
