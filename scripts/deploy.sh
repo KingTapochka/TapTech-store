@@ -15,8 +15,8 @@ echo "Деплой $TAG"
 sed -i "s/^BACKEND_TAG=.*/BACKEND_TAG=${TAG}/" .env
 
 docker compose pull backend
-docker compose run --rm backend alembic upgrade head
-docker compose up -d backend
+docker compose run --rm --no-deps backend alembic upgrade head
+docker compose up -d --no-deps backend
 
 # Ждём, пока backend станет healthy, максимум 60 секунд
 for i in $(seq 1 12); do
