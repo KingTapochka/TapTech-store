@@ -25,6 +25,10 @@
 - HTTPS с автопродлением сертификата
 - Миграции Alembic вместо ручного SQL
 - Журнал инцидентов: docs/incidents.md
+- GitLab CI/CD с собственным Runner. Тесты на временных PostgreSQL и Redis,
+  сборка образа в GitLab Registry
+- Деплой по тегу версии: SSH-ключ ограничен запуском скрипта деплоя,
+  миграции перед запуском, проверка healthy, откат через GitLab Environments
 
 ## Запуск
 
@@ -35,7 +39,6 @@
 ## В планах
 
 - Фронтенд: каталог, корзина, оформление заказа; сборка multi-stage Docker
-- GitLab CI/CD
 - Ansible
 - Бэкапы PostgreSQL
 - Мониторинг Prometheus и Grafana
