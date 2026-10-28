@@ -1,0 +1,67 @@
+- name: Установить базовые пакеты
+  ansible.builtin.apt:
+    name:
+      - curl
+      - ca-certificates
+      - ufw
+      - unattended-upgrades
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Обновить установленные пакеты
+  ansible.builtin.apt:
+    upgrade: safe
+
+- name: Включить автообновления безопасности
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    mode: "0644"
+
+- name: Перезагрузка после обновлений в 02:00
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/52unattended-reboot
+    content: |
+      Unattended-Upgrade::Automatic-Reboot "true";
+      Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+    mode: "0644"
+
+- name: Разрешить overcommit памяти для Redis
+  ansible.posix.sysctl:
+    name: vm.overcommit_memory
+    value: "1"
+    sysctl_file: /etc/sysctl.d/99-redis.conf
+    state: present
+
+- name: Настройки SSH
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/00-hardening.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+    mode: "0644"
+  notify: Перезапустить SSH
+
+- name: Проверить конфигурацию SSH
+  ansible.builtin.command: sshd -t
+  changed_when: false
+
+- name: UFW разрешить порты
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+  loop:
+    - "22"
+    - "80"
+    - "443"
+
+- name: UFW включить, входящие запрещены по умолчанию
+  community.general.ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
