@@ -1,0 +1,82 @@
+- name: Создать папки проекта
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+  loop:
+    - "{{ app_dir }}"
+    - "{{ app_dir }}/scripts"
+    - "{{ app_dir }}/nginx/conf.d"
+
+- name: Скопировать docker-compose.yml
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../docker-compose.yml"
+    dest: "{{ app_dir }}/docker-compose.yml"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0644"
+
+- name: Скопировать скрипты
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../scripts/{{ item }}"
+    dest: "{{ app_dir }}/scripts/{{ item }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0755"
+  loop:
+    - deploy.sh
+    - renew_cert.sh
+
+- name: Узнать текущую версию backend на сервере
+  ansible.builtin.command: grep -oP '^BACKEND_TAG=\K.*' {{ app_dir }}/.env
+  register: env_backend_tag
+  changed_when: false
+  failed_when: false
+
+- name: Выбрать версию backend
+  ansible.builtin.set_fact:
+    current_backend_tag: "{{ env_backend_tag.stdout if env_backend_tag.stdout else backend_tag }}"
+
+- name: Создать .env
+  ansible.builtin.template:
+    src: env.j2
+    dest: "{{ app_dir }}/.env"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0600"
+  diff: false
+
+- name: Создать конфиг nginx
+  ansible.builtin.template:
+    src: default.conf.j2
+    dest: "{{ app_dir }}/nginx/conf.d/default.conf"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: "0644"
+  notify: Перезапустить nginx
+
+- name: Запустить стек
+  community.docker.docker_compose_v2:
+    project_src: "{{ app_dir }}"
+    state: present
+    pull: missing
+  register: compose_up
+  changed_when: compose_up.actions | rejectattr('status', 'equalto', 'Waiting') | list | length > 0
+
+- name: Применить миграции
+  ansible.builtin.command: docker compose run --rm --no-deps backend alembic upgrade head
+  args:
+    chdir: "{{ app_dir }}"
+  register: migrations
+  changed_when: "'Running upgrade' in migrations.stderr"
+
+- name: Проверить, что сайт отвечает
+  ansible.builtin.uri:
+    url: "{{ ('https://' + domain) if tls_enabled else 'http://localhost' }}/api/health"
+    status_code: 200
+  register: health
+  retries: 12
+  delay: 5
+  until: health.status == 200

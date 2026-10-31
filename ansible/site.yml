@@ -1,5 +1,7 @@
-- name: Базовая настройка сервера
+- name: Настройка сервера и развёртывание приложения
   hosts: all
   become: true
   roles:
     - base
+    - docker
+    - app
