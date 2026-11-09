@@ -1,0 +1,7 @@
+- name: Ежедневная проверка продления сертификата
+  ansible.builtin.cron:
+    name: "Продление сертификата Let's Encrypt"
+    user: "{{ app_user }}"
+    minute: "17"
+    hour: "3"
+    job: "{{ app_dir }}/scripts/renew_cert.sh >> /home/{{ app_user }}/renew-cert.log 2>&1"

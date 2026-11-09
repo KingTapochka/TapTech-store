@@ -65,3 +65,9 @@
     state: enabled
     policy: deny
     direction: incoming
+
+- name: Синхронизация времени в роли base
+  ansible.builtin.service:
+    name: systemd-timesyncd
+    state: started
+    enabled: true
