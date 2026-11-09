@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e
 cd /home/devops/computer-store
 docker compose run --rm certbot renew --quiet

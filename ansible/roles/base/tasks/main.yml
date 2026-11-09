@@ -12,6 +12,7 @@
 - name: Обновить установленные пакеты
   ansible.builtin.apt:
     upgrade: safe
+  tags: [upgrade]
 
 - name: Включить автообновления безопасности
   ansible.builtin.copy:
